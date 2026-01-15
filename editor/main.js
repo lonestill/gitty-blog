@@ -1,6 +1,7 @@
 const { app, BrowserWindow, ipcMain } = require('electron');
 const path = require('path');
 const fs = require('fs');
+const { execSync } = require('child_process');
 const { Octokit } = require('@octokit/rest');
 
 let mainWindow;
@@ -92,7 +93,7 @@ ipcMain.handle('delete-post', async (event, filename) => {
   }
 });
 
-ipcMain.handle('upload-post', async (event, { filename, token, repo, branch = 'main' }) => {
+ipcMain.handle('upload-post', async (event, { filename, token, repo, branch = 'main', useGit = true }) => {
   try {
     if (!token || !repo) {
       return { success: false, error: 'GitHub token and repository are required' };
@@ -103,6 +104,47 @@ ipcMain.handle('upload-post', async (event, { filename, token, repo, branch = 'm
       return { success: false, error: 'File not found' };
     }
 
+    // Use git commands if useGit is true
+    if (useGit) {
+      try {
+        const repoRoot = path.join(__dirname, '..');
+        
+        // Check if it's a git repo
+        try {
+          execSync('git rev-parse --git-dir', { cwd: repoRoot, stdio: 'ignore' });
+        } catch {
+          return { success: false, error: 'Not a git repository. Initialize with: git init' };
+        }
+
+        // Configure git with token
+        const remoteUrl = `https://${token}@github.com/${repo}.git`;
+        
+        // Set remote if not exists or update it
+        try {
+          execSync('git remote get-url origin', { cwd: repoRoot, stdio: 'ignore' });
+          execSync(`git remote set-url origin ${remoteUrl}`, { cwd: repoRoot, stdio: 'ignore' });
+        } catch {
+          execSync(`git remote add origin ${remoteUrl}`, { cwd: repoRoot, stdio: 'ignore' });
+        }
+
+        // Add file
+        execSync(`git add "${filePath}"`, { cwd: repoRoot, stdio: 'pipe' });
+        
+        // Commit
+        const commitMessage = `Add/Update: ${filename}`;
+        execSync(`git commit -m "${commitMessage}"`, { cwd: repoRoot, stdio: 'pipe' });
+        
+        // Push
+        execSync(`git push origin ${branch}`, { cwd: repoRoot, stdio: 'pipe' });
+        
+        return { success: true };
+      } catch (error) {
+        // Fallback to API if git fails
+        console.warn('Git push failed, trying API:', error.message);
+      }
+    }
+
+    // Fallback to GitHub API
     const content = fs.readFileSync(filePath, 'utf-8');
     const base64Content = Buffer.from(content, 'utf-8').toString('base64');
 

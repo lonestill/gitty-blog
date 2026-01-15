@@ -401,19 +401,33 @@ async function uploadPost() {
   // Save locally first
   await savePost();
   
-  const result = await window.electronAPI.uploadPost({
-    filename: currentPost,
-    token: config.token,
-    repo: config.repo,
-    branch: config.branch
-  });
+  // Show uploading status
+  const uploadBtn = document.getElementById('upload-btn');
+  const originalText = uploadBtn.textContent;
+  uploadBtn.textContent = 'Uploading...';
+  uploadBtn.disabled = true;
   
-  if (result.success) {
-    // Generate index
-    await window.electronAPI.generateIndex();
-    alert('Post uploaded successfully!');
-  } else {
-    alert('Error uploading post: ' + result.error);
+  try {
+    const result = await window.electronAPI.uploadPost({
+      filename: currentPost,
+      token: config.token,
+      repo: config.repo,
+      branch: config.branch,
+      useGit: true
+    });
+    
+    if (result.success) {
+      // Generate index
+      await window.electronAPI.generateIndex();
+      alert('Post uploaded and pushed to GitHub successfully!');
+      isDirty = false;
+      updateStatus();
+    } else {
+      alert('Error uploading post: ' + result.error);
+    }
+  } finally {
+    uploadBtn.textContent = originalText;
+    uploadBtn.disabled = false;
   }
 }
 
