@@ -148,14 +148,30 @@ ipcMain.handle('upload-post', async (event, { filename, token, repo, branch = 'm
         try {
           execSync(`git pull origin ${branch} --no-edit`, { cwd: repoRoot, stdio: 'pipe' });
         } catch (pullError) {
-          // If pull fails (e.g., local changes), try to stash and pull
+          // If pull fails, try to handle untracked files and pull again
           try {
-            execSync('git stash push -m "Auto-stash before pull"', { cwd: repoRoot, stdio: 'pipe' });
+            // Add all untracked files first
+            try {
+              execSync('git add -A', { cwd: repoRoot, stdio: 'pipe' });
+            } catch {}
+            
+            // Stash all changes (including staged)
+            execSync('git stash push -u -m "Auto-stash before pull"', { cwd: repoRoot, stdio: 'pipe' });
+            
+            // Now pull should work
             execSync(`git pull origin ${branch} --no-edit`, { cwd: repoRoot, stdio: 'pipe' });
+            
+            // Restore stashed changes
             execSync('git stash pop', { cwd: repoRoot, stdio: 'pipe' });
           } catch (stashError) {
             console.warn('Failed to pull/stash:', stashError.message);
-            // Continue anyway - might be able to push
+            // Try pull with rebase as last resort
+            try {
+              execSync(`git pull --rebase origin ${branch} --no-edit`, { cwd: repoRoot, stdio: 'pipe' });
+            } catch (rebaseError) {
+              console.warn('Failed to pull with rebase:', rebaseError.message);
+              // Continue anyway - might be able to push after commit
+            }
           }
         }
 
@@ -167,20 +183,12 @@ ipcMain.handle('upload-post', async (event, { filename, token, repo, branch = 'm
           console.warn('Failed to generate posts.json:', genError.message);
         }
         
-        // Add files to staging
+        // Add all changed files to staging (includes post.md and posts.json)
         try {
-          execSync(`git add "${filePath}"`, { cwd: repoRoot, stdio: 'pipe' });
+          execSync('git add .', { cwd: repoRoot, stdio: 'pipe' });
+          console.log('Added all changed files to staging');
         } catch (addError) {
-          throw new Error(`Failed to add file: ${addError.message}`);
-        }
-        
-        const postsJsonPath = path.join(repoRoot, 'src', 'assets', 'posts.json');
-        if (fs.existsSync(postsJsonPath)) {
-          try {
-            execSync(`git add "${postsJsonPath}"`, { cwd: repoRoot, stdio: 'pipe' });
-          } catch (addError) {
-            console.warn('Failed to add posts.json:', addError.message);
-          }
+          throw new Error(`Failed to add files: ${addError.message}`);
         }
         
         // Check if there are any staged changes to commit (after git add)
@@ -222,7 +230,21 @@ ipcMain.handle('upload-post', async (event, { filename, token, repo, branch = 'm
           execSync(`git push origin ${branch}`, { cwd: repoRoot, stdio: 'pipe' });
         } catch (pushError) {
           const errorMsg = pushError.message || pushError.toString();
-          throw new Error(`Failed to push: ${errorMsg}`);
+          
+          // If push fails due to non-fast-forward, try pull with rebase and push again
+          if (errorMsg.includes('non-fast-forward') || errorMsg.includes('behind')) {
+            console.log('Push rejected, pulling with rebase and pushing again...');
+            try {
+              execSync(`git pull --rebase origin ${branch}`, { cwd: repoRoot, stdio: 'pipe' });
+              // Try push again after rebase
+              execSync(`git push origin ${branch}`, { cwd: repoRoot, stdio: 'pipe' });
+              console.log('Successfully pushed after rebase');
+            } catch (rebaseError) {
+              throw new Error(`Failed to push after rebase: ${rebaseError.message}`);
+            }
+          } else {
+            throw new Error(`Failed to push: ${errorMsg}`);
+          }
         }
         
         return { success: true };
