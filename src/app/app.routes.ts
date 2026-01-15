@@ -12,5 +12,13 @@ export const routes: Routes = [
   {
     path: 'post/:path',
     loadComponent: () => import('./post-detail/post-detail.component').then(m => m.PostDetailComponent)
+  },
+  {
+    path: 'projects',
+    loadComponent: () => import('./projects/projects.component').then(m => m.ProjectsComponent)
+  },
+  {
+    path: 'project/:repo',
+    loadComponent: () => import('./project-detail/project-detail.component').then(m => m.ProjectDetailComponent)
   }
 ];

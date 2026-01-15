@@ -8,7 +8,10 @@
     "generate-index": "node scripts/generate-index.js",
     "build": "npm run generate-index && ng build --base-href /",
     "watch": "ng build --watch --configuration development",
-    "test": "ng test"
+    "test": "ng test",
+    "new-post": "node cli/new-post.js",
+    "upload": "node cli/upload.js",
+    "editor": "cd editor && npm start"
   },
   "private": true,
   "keywords": ["blog", "github-pages", "angular", "markdown"],

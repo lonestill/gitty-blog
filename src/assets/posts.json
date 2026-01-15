@@ -1,5 +1,83 @@
 [
   {
+    "path": "the-art-of-simplicity.md",
+    "title": "The Art of Simplicity",
+    "date": "2024-01-25",
+    "author": "lonestill",
+    "tags": [
+      "philosophy",
+      "design",
+      "minimalism"
+    ],
+    "category": "thoughts",
+    "excerpt": "# The Art of Simplicity\r\n\r\nSimplicity is not about having less. It's about having exactly what you need, nothing more, nothing less.\r\n\r\n## Less is More\r\n\r\nThis phrase, often attributed to architect Lu"
+  },
+  {
+    "path": "typescript-tips-and-tricks.md",
+    "title": "TypeScript Tips and Tricks",
+    "date": "2024-01-20",
+    "author": "lonestill",
+    "tags": [
+      "typescript",
+      "javascript",
+      "programming"
+    ],
+    "category": "development",
+    "excerpt": "# TypeScript Tips and Tricks\r\n\r\nTypeScript continues to evolve, and there are always new patterns and techniques to learn. Here are some useful tips for writing better TypeScript code.\r\n\r\n## Utility T"
+  },
+  {
+    "path": "getting-started-with-angular.md",
+    "title": "Getting Started with Angular 17",
+    "date": "2024-01-15",
+    "author": "lonestill",
+    "tags": [
+      "angular",
+      "web-development",
+      "tutorial"
+    ],
+    "category": "development",
+    "excerpt": "# Getting Started with Angular 17\r\n\r\nAngular 17 introduced several exciting features that make building modern web applications more efficient and enjoyable. In this post, we'll explore the key improv"
+  },
+  {
+    "path": "markdown-best-practices.md",
+    "title": "Markdown Best Practices",
+    "date": "2024-01-12",
+    "author": "lonestill",
+    "tags": [
+      "markdown",
+      "writing",
+      "documentation"
+    ],
+    "category": "development",
+    "excerpt": "# Markdown Best Practices\r\n\r\nMarkdown is simple, but there are best practices that can make your documents more readable and maintainable.\r\n\r\n## Headers\r\n\r\nUse headers to create clear hierarchy. Don't"
+  },
+  {
+    "path": "minimal-web-design-principles.md",
+    "title": "Principles of Minimal Web Design",
+    "date": "2024-01-10",
+    "author": "lonestill",
+    "tags": [
+      "design",
+      "web-design",
+      "minimalism"
+    ],
+    "category": "design",
+    "excerpt": "# Principles of Minimal Web Design\r\n\r\nMinimalism in web design isn't about removing everything—it's about removing everything unnecessary. Here are the core principles that guide effective minimal des"
+  },
+  {
+    "path": "building-static-sites.md",
+    "title": "Building Static Sites with GitHub Pages",
+    "date": "2024-01-05",
+    "author": "lonestill",
+    "tags": [
+      "github",
+      "static-sites",
+      "deployment"
+    ],
+    "category": "development",
+    "excerpt": "# Building Static Sites with GitHub Pages\r\n\r\nGitHub Pages provides a free, reliable way to host static websites. Here's how to leverage it effectively.\r\n\r\n## Why Static Sites?\r\n\r\nStatic sites offer se"
+  },
+  {
     "path": "example-post.md",
     "title": "Welcome to Gitty",
     "date": "2024-01-01",

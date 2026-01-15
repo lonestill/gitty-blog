@@ -1,0 +1,9 @@
+[
+  {
+    "name": "github-readme-stats",
+    "description": "A rewrited fork of github-readme-stats with some functionality",
+    "repo": "lonestill/github-readme-stats",
+    "year": "2024",
+    "tech": ["JavaScript", "TypeScript", "Node.js"]
+  }
+]

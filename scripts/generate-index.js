@@ -138,6 +138,38 @@ function generateIndex() {
     fs.copyFileSync(filePath, targetPath);
   });
   console.log(`✓ Copied ${markdownFiles.length} markdown file(s) to assets/content`);
+  
+  // Copy mp3 files to assets/content
+  function findMp3Files(dir, fileList = []) {
+    const files = fs.readdirSync(dir);
+    files.forEach(file => {
+      const filePath = path.join(dir, file);
+      const stat = fs.statSync(filePath);
+      if (stat.isDirectory()) {
+        findMp3Files(filePath, fileList);
+      } else if (file.endsWith('.mp3')) {
+        fileList.push(filePath);
+      }
+    });
+    return fileList;
+  }
+  
+  const mp3Files = findMp3Files(contentRoot);
+  if (mp3Files.length > 0) {
+    console.log(`Copying ${mp3Files.length} mp3 file(s) to assets/content...`);
+    mp3Files.forEach(filePath => {
+      const relativePath = path.relative(contentRoot, filePath);
+      const targetPath = path.join(assetsContentDir, relativePath);
+      const targetDir = path.dirname(targetPath);
+      
+      if (!fs.existsSync(targetDir)) {
+        fs.mkdirSync(targetDir, { recursive: true });
+      }
+      
+      fs.copyFileSync(filePath, targetPath);
+    });
+    console.log(`✓ Copied ${mp3Files.length} mp3 file(s) to assets/content`);
+  }
 }
 
 // Run if called directly
