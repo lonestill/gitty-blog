@@ -6,7 +6,7 @@
     "ng": "ng",
     "start": "ng serve",
     "generate-index": "node scripts/generate-index.js",
-    "build": "npm run generate-index && ng build --base-href /",
+    "build": "npm run generate-index && ng build --base-href /gitty-blog/",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
     "new-post": "node cli/new-post.js",
