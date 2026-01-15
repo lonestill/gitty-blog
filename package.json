@@ -1,0 +1,40 @@
+{
+  "name": "gitty",
+  "version": "1.0.0",
+  "description": "Gitty - A GitHub Pages based blog platform",
+  "scripts": {
+    "ng": "ng",
+    "start": "ng serve",
+    "generate-index": "node scripts/generate-index.js",
+    "build": "npm run generate-index && ng build --base-href /",
+    "watch": "ng build --watch --configuration development",
+    "test": "ng test"
+  },
+  "private": true,
+  "keywords": ["blog", "github-pages", "angular", "markdown"],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "@angular/animations": "^17.0.0",
+    "@angular/common": "^17.0.0",
+    "@angular/compiler": "^17.0.0",
+    "@angular/core": "^17.0.0",
+    "@angular/platform-browser": "^17.0.0",
+    "@angular/platform-browser-dynamic": "^17.0.0",
+    "@angular/router": "^17.0.0",
+    "ngx-markdown": "^17.0.0",
+    "marked": "^11.0.0",
+    "rxjs": "~7.8.0",
+    "tslib": "^2.3.0",
+    "zone.js": "~0.14.2"
+  },
+  "devDependencies": {
+    "@angular-devkit/build-angular": "^17.0.0",
+    "@angular/cli": "^17.0.0",
+    "@angular/compiler-cli": "^17.0.0",
+    "@octokit/rest": "^20.0.0",
+    "@types/node": "^20.0.0",
+    "gray-matter": "^4.0.3",
+    "typescript": "~5.2.2"
+  }
+}
