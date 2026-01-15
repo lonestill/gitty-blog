@@ -127,20 +127,88 @@ ipcMain.handle('upload-post', async (event, { filename, token, repo, branch = 'm
           execSync(`git remote add origin ${remoteUrl}`, { cwd: repoRoot, stdio: 'ignore' });
         }
 
-        // Add file
-        execSync(`git add "${filePath}"`, { cwd: repoRoot, stdio: 'pipe' });
+        // Configure git user if not set (required for commits)
+        try {
+          execSync('git config user.name', { cwd: repoRoot, stdio: 'ignore' });
+        } catch {
+          // Extract username from repo (owner)
+          const [owner] = repo.split('/');
+          execSync(`git config user.name "${owner}"`, { cwd: repoRoot, stdio: 'ignore' });
+        }
+        
+        try {
+          execSync('git config user.email', { cwd: repoRoot, stdio: 'ignore' });
+        } catch {
+          // Set a default email (GitHub allows this format)
+          const [owner] = repo.split('/');
+          execSync(`git config user.email "${owner}@users.noreply.github.com"`, { cwd: repoRoot, stdio: 'ignore' });
+        }
+
+        // Generate posts.json before committing
+        try {
+          const { generateIndex } = require('../scripts/generate-index.js');
+          generateIndex();
+        } catch (genError) {
+          console.warn('Failed to generate posts.json:', genError.message);
+        }
+        
+        // Add files to staging (git add will only add if there are changes)
+        try {
+          execSync(`git add "${filePath}"`, { cwd: repoRoot, stdio: 'pipe' });
+        } catch (addError) {
+          throw new Error(`Failed to add file: ${addError.message}`);
+        }
+        
+        const postsJsonPath = path.join(repoRoot, 'src', 'assets', 'posts.json');
+        if (fs.existsSync(postsJsonPath)) {
+          try {
+            execSync(`git add "${postsJsonPath}"`, { cwd: repoRoot, stdio: 'pipe' });
+          } catch (addError) {
+            console.warn('Failed to add posts.json:', addError.message);
+          }
+        }
+        
+        // Check if there are any staged changes to commit (after git add)
+        let hasStagedChanges = false;
+        try {
+          const stagedStatus = execSync('git diff --cached --name-only', { cwd: repoRoot, encoding: 'utf-8' });
+          hasStagedChanges = stagedStatus.trim().length > 0;
+        } catch {
+          // If check fails, try alternative method
+          try {
+            const status = execSync('git status --porcelain', { cwd: repoRoot, encoding: 'utf-8' });
+            // Check for staged files (lines starting with A, M, D, R, C)
+            hasStagedChanges = status.split('\n').some(line => /^[AMDRC]/.test(line.trim()));
+          } catch {
+            hasStagedChanges = false;
+          }
+        }
+        
+        if (!hasStagedChanges) {
+          console.log('No changes to commit - files are already up to date');
+          return { success: true, message: 'No changes to commit - files are already up to date' };
+        }
         
         // Commit
         const commitMessage = `Add/Update: ${filename}`;
-        execSync(`git commit -m "${commitMessage}"`, { cwd: repoRoot, stdio: 'pipe' });
+        try {
+          execSync(`git commit -m "${commitMessage}"`, { cwd: repoRoot, stdio: 'pipe' });
+        } catch (commitError) {
+          throw new Error(`Failed to commit: ${commitError.message}`);
+        }
         
         // Push
-        execSync(`git push origin ${branch}`, { cwd: repoRoot, stdio: 'pipe' });
+        try {
+          execSync(`git push origin ${branch}`, { cwd: repoRoot, stdio: 'pipe' });
+        } catch (pushError) {
+          throw new Error(`Failed to push: ${pushError.message}`);
+        }
         
         return { success: true };
       } catch (error) {
-        // Fallback to API if git fails
-        console.warn('Git push failed, trying API:', error.message);
+        // Return error instead of silently falling back to API
+        console.error('Git push failed:', error.message);
+        return { success: false, error: `Git error: ${error.message}` };
       }
     }
 
@@ -153,10 +221,18 @@ ipcMain.handle('upload-post', async (event, { filename, token, repo, branch = 'm
       return { success: false, error: 'Invalid repository format. Use owner/repo' };
     }
 
+    // Generate posts.json before uploading
+    try {
+      const { generateIndex } = require('../scripts/generate-index.js');
+      generateIndex();
+    } catch (genError) {
+      console.warn('Failed to generate posts.json:', genError.message);
+    }
+
     const octokit = new Octokit({ auth: token });
     const targetPath = `content/${filename}`;
 
-    // Check if file exists
+    // Upload the post file
     let sha = null;
     try {
       const response = await octokit.repos.getContent({
@@ -184,18 +260,38 @@ ipcMain.handle('upload-post', async (event, { filename, token, repo, branch = 'm
       ...(sha && { sha })
     });
 
-    // Trigger workflow dispatch after API upload
-    try {
-      await octokit.actions.createWorkflowDispatch({
+    // Upload posts.json
+    const postsJsonPath = path.join(__dirname, '..', 'src', 'assets', 'posts.json');
+    if (fs.existsSync(postsJsonPath)) {
+      const postsJsonContent = fs.readFileSync(postsJsonPath, 'utf-8');
+      const postsJsonBase64 = Buffer.from(postsJsonContent, 'utf-8').toString('base64');
+      
+      let postsJsonSha = null;
+      try {
+        const postsJsonResponse = await octokit.repos.getContent({
+          owner,
+          repo: repoName,
+          path: 'src/assets/posts.json',
+          ref: branch
+        });
+        if (postsJsonResponse.data && postsJsonResponse.data.sha) {
+          postsJsonSha = postsJsonResponse.data.sha;
+        }
+      } catch (error) {
+        if (error.status !== 404) {
+          throw error;
+        }
+      }
+
+      await octokit.repos.createOrUpdateFileContents({
         owner,
         repo: repoName,
-        workflow_id: 'main.yml',
-        ref: branch
+        path: 'src/assets/posts.json',
+        message: `Update posts index`,
+        content: postsJsonBase64,
+        branch: branch,
+        ...(postsJsonSha && { sha: postsJsonSha })
       });
-    } catch (workflowError) {
-      // Workflow dispatch might fail if workflow doesn't exist or permissions are insufficient
-      // This is not critical - user can manually trigger it
-      console.warn('Failed to trigger workflow automatically:', workflowError.message);
     }
 
     return { success: true };

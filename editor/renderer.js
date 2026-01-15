@@ -344,8 +344,9 @@ function createNewPostFromModal() {
   const filename = `${date}-${slug}.md`;
   
   const template = `---
-title: ${title}
+title: "${title}"
 date: ${date}
+author: ""
 tags: []
 ---
 
@@ -370,6 +371,19 @@ Write your post content here...
 // Save post
 async function savePost() {
   if (!currentPost) return;
+  
+  // Check for Git merge conflict markers
+  if (currentContent.includes('<<<<<<< HEAD') || 
+      currentContent.includes('=======') || 
+      currentContent.includes('>>>>>>>')) {
+    const confirm = window.confirm(
+      'Warning: This file contains Git merge conflict markers (<<<<<<< HEAD, =======, >>>>>>>).\n\n' +
+      'These should be resolved before saving. Do you want to save anyway?'
+    );
+    if (!confirm) {
+      return;
+    }
+  }
   
   const result = await window.electronAPI.savePost({
     filename: currentPost,
@@ -417,12 +431,10 @@ async function uploadPost() {
     });
     
     if (result.success) {
-      // Generate index locally (workflow will regenerate it on deploy)
+      // Generate index locally for preview (already generated during upload)
       await window.electronAPI.generateIndex();
       
-      // Check if git push was used (workflow auto-triggers) or API (we trigger manually)
-      const message = 'Post uploaded successfully! Deployment workflow is starting...';
-      alert(message);
+      alert('Post uploaded and posts.json updated successfully!');
       isDirty = false;
       updateStatus();
     } else {

@@ -1,9 +1,44 @@
 [
   {
+    "name": "gitty-blog",
+    "description": "A minimal, dark-themed blog platform built with Angular 17+ and deployed on GitHub Pages",
+    "repo": "lonestill/gitty-blog",
+    "year": "2026",
+    "tech": ["TypeScript", "JavaScript", "HTML", "CSS", "Angular"]
+  },
+  {
+    "name": "pipipupucheck",
+    "description": "repo with 1kk commits",
+    "repo": "lonestill/pipipupucheck",
+    "year": "2026",
+    "tech": []
+  },
+  {
     "name": "github-readme-stats",
     "description": "A rewrited fork of github-readme-stats with some functionality",
     "repo": "lonestill/github-readme-stats",
-    "year": "2024",
-    "tech": ["JavaScript", "TypeScript", "Node.js"]
+    "year": "2026",
+    "tech": ["JavaScript", "HTML", "Shell"]
+  },
+  {
+    "name": "novashell",
+    "description": "A custom cross-platform CLI shell/console",
+    "repo": "lonestill/novashell",
+    "year": "2026",
+    "tech": ["JavaScript", "TypeScript", "PowerShell", "Shell", "HTML"]
+  },
+  {
+    "name": "configV",
+    "description": "Configuration management tool",
+    "repo": "lonestill/configV",
+    "year": "2026",
+    "tech": ["TypeScript", "HTML"]
+  },
+  {
+    "name": "codemind",
+    "description": "Code intelligence and analysis tool",
+    "repo": "lonestill/codemind",
+    "year": "2026",
+    "tech": ["TypeScript", "HTML"]
   }
 ]
