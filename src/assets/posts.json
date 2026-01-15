@@ -29,5 +29,16 @@
     ],
     "category": null,
     "excerpt": "дописал себе кастомный аплоадер, потихоньку пилю https://github.com/lonestill/gitty-blog\r\nклассно когда есть мотивация что либо делать, идеи какие то приходят в голову, энтузиазм присутствует\r\n\r\nstay "
+  },
+  {
+    "path": "2026-01-15-upload-fixed.md",
+    "title": "upload fixed!!!",
+    "date": "2026-01-15T00:00:00.000Z",
+    "author": "lonestill",
+    "tags": [
+      "project"
+    ],
+    "category": null,
+    "excerpt": "наконец то смог пофиксить аплоадер? или нет"
   }
 ]
