@@ -10,7 +10,7 @@ import { MarkdownComponent } from 'ngx-markdown';
   imports: [CommonModule, RouterLink, MarkdownComponent],
   template: `
     <div class="post-detail-container">
-      <a routerLink="/" class="back-link">
+      <a routerLink="/posts" class="back-link">
         <span class="back-arrow">←</span>
         <span>Back</span>
       </a>

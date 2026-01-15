@@ -144,6 +144,21 @@ ipcMain.handle('upload-post', async (event, { filename, token, repo, branch = 'm
           execSync(`git config user.email "${owner}@users.noreply.github.com"`, { cwd: repoRoot, stdio: 'ignore' });
         }
 
+        // Pull latest changes first to avoid conflicts
+        try {
+          execSync(`git pull origin ${branch} --no-edit`, { cwd: repoRoot, stdio: 'pipe' });
+        } catch (pullError) {
+          // If pull fails (e.g., local changes), try to stash and pull
+          try {
+            execSync('git stash push -m "Auto-stash before pull"', { cwd: repoRoot, stdio: 'pipe' });
+            execSync(`git pull origin ${branch} --no-edit`, { cwd: repoRoot, stdio: 'pipe' });
+            execSync('git stash pop', { cwd: repoRoot, stdio: 'pipe' });
+          } catch (stashError) {
+            console.warn('Failed to pull/stash:', stashError.message);
+            // Continue anyway - might be able to push
+          }
+        }
+
         // Generate posts.json before committing
         try {
           const { generateIndex } = require('../scripts/generate-index.js');
@@ -152,7 +167,7 @@ ipcMain.handle('upload-post', async (event, { filename, token, repo, branch = 'm
           console.warn('Failed to generate posts.json:', genError.message);
         }
         
-        // Add files to staging (git add will only add if there are changes)
+        // Add files to staging
         try {
           execSync(`git add "${filePath}"`, { cwd: repoRoot, stdio: 'pipe' });
         } catch (addError) {
@@ -194,14 +209,20 @@ ipcMain.handle('upload-post', async (event, { filename, token, repo, branch = 'm
         try {
           execSync(`git commit -m "${commitMessage}"`, { cwd: repoRoot, stdio: 'pipe' });
         } catch (commitError) {
-          throw new Error(`Failed to commit: ${commitError.message}`);
+          const errorMsg = commitError.message || commitError.toString();
+          // Check if it's "nothing to commit" error
+          if (errorMsg.includes('nothing to commit') || errorMsg.includes('no changes')) {
+            return { success: true, message: 'No changes to commit' };
+          }
+          throw new Error(`Failed to commit: ${errorMsg}`);
         }
         
         // Push
         try {
           execSync(`git push origin ${branch}`, { cwd: repoRoot, stdio: 'pipe' });
         } catch (pushError) {
-          throw new Error(`Failed to push: ${pushError.message}`);
+          const errorMsg = pushError.message || pushError.toString();
+          throw new Error(`Failed to push: ${errorMsg}`);
         }
         
         return { success: true };
