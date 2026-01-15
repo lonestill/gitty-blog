@@ -307,12 +307,40 @@ function escapeHtml(text) {
 }
 
 // Create new post
-function createNewPost() {
-  const title = prompt('Enter post title:');
-  if (!title) return;
+function showNewPostModal() {
+  const modal = document.getElementById('new-post-modal');
+  const titleInput = document.getElementById('new-post-title');
+  modal.classList.add('active');
+  titleInput.value = '';
+  titleInput.focus();
+  
+  // Handle Enter key
+  titleInput.onkeydown = (e) => {
+    if (e.key === 'Enter') {
+      createNewPostFromModal();
+    } else if (e.key === 'Escape') {
+      modal.classList.remove('active');
+    }
+  };
+}
+
+function createNewPostFromModal() {
+  const titleInput = document.getElementById('new-post-title');
+  const title = titleInput.value.trim();
+  
+  if (!title) {
+    alert('Please enter a post title');
+    return;
+  }
+  
+  document.getElementById('new-post-modal').classList.remove('active');
   
   const date = new Date().toISOString().split('T')[0];
-  const slug = title.toLowerCase().replace(/[^\w\s-]/g, '').replace(/\s+/g, '-');
+  const slug = title.toLowerCase()
+    .replace(/[^\w\s-]/g, '')
+    .replace(/\s+/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^-|-$/g, '');
   const filename = `${date}-${slug}.md`;
   
   const template = `---
@@ -329,8 +357,14 @@ Write your post content here...
   currentContent = template;
   isDirty = true;
   
+  // Render editor first
   renderEditor();
-  loadPosts();
+  
+  // Save immediately (async)
+  setTimeout(async () => {
+    await savePost();
+    await loadPosts();
+  }, 100);
 }
 
 // Save post
@@ -399,7 +433,11 @@ document.addEventListener('keydown', (e) => {
 });
 
 // Event listeners
-document.getElementById('new-post-btn').addEventListener('click', createNewPost);
+document.getElementById('new-post-btn').addEventListener('click', showNewPostModal);
+document.getElementById('new-post-create').addEventListener('click', createNewPostFromModal);
+document.getElementById('new-post-cancel').addEventListener('click', () => {
+  document.getElementById('new-post-modal').classList.remove('active');
+});
 document.getElementById('upload-btn').addEventListener('click', uploadPost);
 document.getElementById('settings-btn').addEventListener('click', () => {
   document.getElementById('settings-modal').classList.add('active');
@@ -409,7 +447,15 @@ document.getElementById('settings-cancel').addEventListener('click', () => {
 });
 document.getElementById('settings-save').addEventListener('click', saveConfig);
 
-// Initialize
-loadConfig().then(() => {
-  loadPosts();
-});
+// Initialize when DOM is ready
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', init);
+} else {
+  init();
+}
+
+function init() {
+  loadConfig().then(() => {
+    loadPosts();
+  });
+}
