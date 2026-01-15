@@ -417,9 +417,12 @@ async function uploadPost() {
     });
     
     if (result.success) {
-      // Generate index
+      // Generate index locally (workflow will regenerate it on deploy)
       await window.electronAPI.generateIndex();
-      alert('Post uploaded and pushed to GitHub successfully!');
+      
+      // Check if git push was used (workflow auto-triggers) or API (we trigger manually)
+      const message = 'Post uploaded successfully! Deployment workflow is starting...';
+      alert(message);
       isDirty = false;
       updateStatus();
     } else {

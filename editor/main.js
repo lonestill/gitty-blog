@@ -184,6 +184,20 @@ ipcMain.handle('upload-post', async (event, { filename, token, repo, branch = 'm
       ...(sha && { sha })
     });
 
+    // Trigger workflow dispatch after API upload
+    try {
+      await octokit.actions.createWorkflowDispatch({
+        owner,
+        repo: repoName,
+        workflow_id: 'main.yml',
+        ref: branch
+      });
+    } catch (workflowError) {
+      // Workflow dispatch might fail if workflow doesn't exist or permissions are insufficient
+      // This is not critical - user can manually trigger it
+      console.warn('Failed to trigger workflow automatically:', workflowError.message);
+    }
+
     return { success: true };
   } catch (error) {
     return { success: false, error: error.message };
